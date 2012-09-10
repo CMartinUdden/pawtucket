@@ -52,7 +52,7 @@
 		 * @return string The name of the temporary table created
 		 */
 		public function loadListIntoTemporaryResultTable($pa_hits, $ps_key) {
-			global $g_mysql_has_file_priv;
+			global $g_mysql_has_file_priv, $g_db_driver;
 			
 			$ps_key = preg_replace('![^A-Za-z0-9_]+!', '_', $ps_key);
 			if ($this->ops_tmp_table_name == "caResultTmp{$ps_key}") {
@@ -63,15 +63,24 @@
 				$this->cleanupTemporaryResultTable();
 			}
 			$this->ops_tmp_file_path = tempnam(caGetTempDirPath(), 'caResultTmp');
-			$this->ops_tmp_table_name = "caResultTmp{$ps_key}";
-			$this->opo_db->query("
+			$this->ops_tmp_table_name = "c{$ps_key}";
+			$this->opo_db->createTemporaryTable($this->ops_tmp_table_name, array(array("name" => "row_id", 
+																					"type" => "int", 
+																					"length" => 0, 
+																					"primary_key" => false, 
+																					"null" => false, 
+																					"default" => false)));
+
+			$this->opo_db->query("create index {$this->ops_tmp_table_name}_i_row_id on {$this->ops_tmp_table_name}(row_id)");
+
+			/*$this->opo_db->query("
 				CREATE TEMPORARY TABLE {$this->ops_tmp_table_name} (
 					row_id int unsigned not null,
 					key (row_id)
 				) engine=memory;
-			");
+			");*/
 			
-			if (is_null($g_mysql_has_file_priv)) {	// Figure out if user has FILE priv
+			if (is_null($g_mysql_has_file_priv) && ($g_db_driver == 'mysql')) {	// Figure out if user has FILE priv
 				$qr_grants = $this->opo_db->query("
 					SHOW GRANTS;
 				");
@@ -85,7 +94,7 @@
 				}
 			}
 			
-			if ($g_mysql_has_file_priv === true) {
+			if (($g_mysql_has_file_priv === true) && ($g_db_driver == 'mysql')) {
 				// Benchmarking has show that using "LOAD DATA INFILE" with an on-disk tmp file performs best
 				// The downside is that it requires the MySQL global FILE priv, which often is not granted, especially in shared environments
 				file_put_contents($this->ops_tmp_file_path, join("\n", array_keys($pa_hits)));
@@ -94,11 +103,15 @@
 				$this->opo_db->query("LOAD DATA INFILE '{$this->ops_tmp_file_path}' INTO TABLE {$this->ops_tmp_table_name} (row_id)");
 			} else {
 				// Fallback when database login does not have FILE priv
-				$vs_sql = "INSERT IGNORE INTO {$this->ops_tmp_table_name} (row_id) VALUES ";
+				/*$vs_sql = "INSERT IGNORE INTO {$this->ops_tmp_table_name} (row_id) VALUES ";
 				foreach(array_keys($pa_hits) as $vn_row_id) {
 					$vs_sql .= "(".(int)$vn_row_id."),";
 				}
-				$this->opo_db->query(substr($vs_sql, 0, strlen($vs_sql)-1));
+				$this->opo_db->query(substr($vs_sql, 0, strlen($vs_sql)-1));*/
+
+				foreach(array_keys($pa_hits) as $vn_row_id){
+					caSQLInsertIgnore($this->opo_db, $this->ops_tmp_table_name, "select $vn_row_id as row_id");
+				}
 			}
 			return $this->ops_tmp_table_name;
 		}
