@@ -1,13 +1,8 @@
-		<div style="clear:both; height:1px;"><!-- empty --></div></div><!-- end pageArea -->
-		<div id="footer">
-			<?php print $this->request->config->get('page_footer_text'); ?> 
-			[<?php print $this->request->session->elapsedTime(4).'s'; ?>/<?php print caGetMemoryUsage(); ?>]
-		</div><!-- end footer -->
+		<div style="clear:both;"></div></div><!--end main content-->
 <?php
 print TooltipManager::getLoadHTML();
 ?>
 	<div id="caMediaPanel"> 
-		<div id="close"><a href="#" onclick="caMediaPanel.hidePanel(); return false;">&nbsp;&nbsp;&nbsp;</a></div>
 		<div id="caMediaPanelContentArea">
 		
 		</div>
@@ -31,6 +26,9 @@ print TooltipManager::getLoadHTML();
 				closeButtonSelector: '.close'					/* anything with the CSS classname "close" will trigger the panel to close */
 			});
 		}
+	});
+	$(function(){  // $(document).ready shorthand
+	  $('.notificationMessage').effect('fade', 'easeInSine', 5000);
 	});
 	</script>
 	</body>
