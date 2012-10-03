@@ -228,7 +228,8 @@ class SearchEngine extends SearchBase {
 			$vs_search_source = isset($pa_options['search_source']) ? $pa_options['search_source'] : '';
 				
 			$vn_execution_time = $t->getTime(4);
-			$o_log->log(array(
+			if($vn_user_id != 0){
+				$o_log->log(array(
 				'user_id' => $vn_user_id, 
 				'table_num' => $this->opn_tablenum, 
 				'search_expression' => $ps_search, 
@@ -238,7 +239,8 @@ class SearchEngine extends SearchBase {
 				'details' => $vs_log_details,
 				'search_source' => $vs_search_source,
 				'execution_time' => $vn_execution_time
-			));
+				));
+			}
 		}
 		if ($po_result) {
 			$po_result->init($o_res, $this->opa_tables);
