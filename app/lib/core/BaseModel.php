@@ -1610,8 +1610,8 @@ class BaseModel extends BaseObject {
 				}
 			}
 			$vs_sql = "SELECT * FROM ".$this->tableName()." WHERE ".join(" AND ", $va_sql_wheres);
+			if($vs_field == "set_code") $vb_debug = true;
 		}
-
 		$qr_res = $o_db->query($vs_sql);
 		if ($o_db->numErrors()) {
 			$this->postError(250, _t('Basemodel::load SQL had an error: %1; SQL was %2', join("; ", $o_db->getErrors()), $vs_sql), 'BaseModel->load');
@@ -9041,8 +9041,11 @@ $pa_options["display_form_field_tips"] = true;
 		$vn_index = 0;
 		$va_recently_added_items = array();
 		while(sizeof($va_recently_added_items) < $pn_limit) {
-			$qr_res = $o_db->query(
+			/*$qr_res = $o_db->query(
 				"{$vs_sql} LIMIT {$vn_index},{$pn_limit}"
+			);*/
+			$qr_res = $o_db->query(
+				"{$vs_sql} LIMIT {$pn_limit}"
 			);
 			if (!$qr_res->numRows()) { break; }
 			$va_recently_added_items = array();
@@ -9099,13 +9102,24 @@ $pa_options["display_form_field_tips"] = true;
 			$va_wheres[] = "{$vs_table_name}.deleted = 0";
 		}
 		
-		$vs_sql = "
+		/*$vs_sql = "
 			SELECT {$vs_table_name}.* 
 			FROM (
 				SELECT {$vs_table_name}.{$vs_primary_key} FROM {$vs_table_name}
 				{$vs_join_sql}
 			".(sizeof($va_wheres) ? " WHERE " : "").join(" AND ", $va_wheres)."
 				ORDER BY RAND() 
+				{$vs_limit_sql}
+			) AS random_items 
+			INNER JOIN {$vs_table_name} ON {$vs_table_name}.{$vs_primary_key} = random_items.{$vs_primary_key}
+			{$vs_deleted_sql}
+		";*/
+		$vs_sql = "
+			SELECT {$vs_table_name}.* 
+			FROM (
+				SELECT {$vs_table_name}.{$vs_primary_key} FROM {$vs_table_name}
+				{$vs_join_sql}
+			".(sizeof($va_wheres) ? " WHERE " : "").join(" AND ", $va_wheres)."
 				{$vs_limit_sql}
 			) AS random_items 
 			INNER JOIN {$vs_table_name} ON {$vs_table_name}.{$vs_primary_key} = random_items.{$vs_primary_key}
