@@ -800,7 +800,7 @@
 						}
 						break;
 					case 'action':
-						if ($va_tmp[1]) {
+						if ($va_tmp[1] && $this->opo_request->user) {
 							$vs_value = $this->opo_request->user->canDoAction($va_tmp[1]) ? 1 : 0;
 						} else {
 							$vs_value = 1;
